@@ -1,4 +1,4 @@
-import { UsersService } from '../../src/users/users.service';
+import { User, UsersService } from '../../src/users/users.service';
 import { users, e2e } from '../../src/mocks/users';
 
 export const config = {
@@ -14,6 +14,10 @@ export const config = {
   getUserByLogin: {
     url: '/users',
     method: 'GET',
+  },
+  deleteUser: {
+    url: '/users',
+    method: 'DELETE',
   },
 };
 
@@ -34,4 +38,13 @@ export const usersService: UsersService = {
   async findOne(login) {
     return users.find((user) => user.login === login);
   },
+  async remove(login) {
+    const idx = users.findIndex(x => x.login === login);
+
+    const copiedUser = { ...users[idx] };
+
+    users.splice(idx, 1);
+
+    return copiedUser;
+  }
 };

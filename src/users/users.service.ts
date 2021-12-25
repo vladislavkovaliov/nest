@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { users } from '../mocks/users';
-
-// This should be a real class/interface representing a user entity
-export type User = {
-  id: number;
-  login: string;
-  password: string;
-};
+import { User } from './types';
 
 @Injectable()
 export class UsersService {
@@ -26,5 +20,15 @@ export class UsersService {
 
   async findOne(login: string): Promise<User | undefined> {
     return users.find((user) => user.login === login);
+  }
+
+  async remove(login: string): Promise<User | undefined> {
+    const idx = users.findIndex(x => x.login === login);
+
+    const copiedUser = { ...users[idx] };
+
+    users.splice(idx, 1);
+
+    return copiedUser;
   }
 }

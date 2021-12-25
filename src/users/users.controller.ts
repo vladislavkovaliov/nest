@@ -1,6 +1,6 @@
 import {
   Body,
-  Controller,
+  Controller, Delete,
   Get,
   NotFoundException,
   Param,
@@ -9,9 +9,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { User, UsersService } from './users.service';
+import { UsersService } from './users.service';
 import { CreateDtoUser } from './dto';
+import { User } from './types';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags("users")
+@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
   private readonly usersService: UsersService;
@@ -20,6 +24,8 @@ export class UsersController {
     this.usersService = usersService;
   }
 
+  @ApiOperation({ summary: "Create a new user." })
+  @ApiResponse({status: 200, type: CreateDtoUser})
   @UseGuards(JwtAuthGuard)
   @Post('/')
   async login(@Body() createDtoUser: CreateDtoUser) {
@@ -63,6 +69,28 @@ export class UsersController {
 
     return {
       data: { login: user.login },
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':login')
+  async deleteUser(@Param('login') login: string) {
+    if (!Boolean(login)) {
+      throw new NotFoundException();
+    }
+
+    const foundedUser = await this.usersService.findOne(login);
+
+    if (!Boolean(foundedUser)) {
+      throw new NotFoundException();
+    }
+
+    const user = await this.usersService.remove(login);
+
+    return {
+      data: {
+        login: user.login,
+      },
     };
   }
 }

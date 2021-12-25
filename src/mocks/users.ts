@@ -1,4 +1,4 @@
-import { User } from '../users/users.service';
+import { User } from '../users/types';
 
 export const e2e = {
   id: 0,

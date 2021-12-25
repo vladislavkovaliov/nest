@@ -106,4 +106,21 @@ describe(`${config.name} (e2e)`, () => {
       login: expectedUsers.login,
     });
   });
+
+  it(`${config.deleteUser.url} (${config.deleteUser.method})
+    should delete user by login`, async () => {
+    const login = 'e2e';
+    const { statusCode, body } = await request(app.getHttpServer())
+      .del(`${config.deleteUser.url}/${login}`)
+      .set({ Authorization: `Bearer ${token}` });
+
+    const expectedUsers = await usersService.findOne(login);
+
+    expect(expectedUsers).toBeFalsy();
+    expect(statusCode).toEqual(200);
+    expect(body).toHaveProperty('data', {
+      login: login,
+    });
+    console.log(await usersService.find(0, 22));
+  });
 });
