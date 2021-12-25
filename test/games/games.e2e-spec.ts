@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AuthModule } from '../../src/auth/auth.module';
-import { UsersModule } from '../../src/users/users.module';
-import { config, e2eCreds, usersService } from './config';
+import { config, e2eCreds, gamesService } from './config';
+import { GamesModule } from '../../src/games/games.module';
+import { GamesService } from '../../src/games/games.service';
+import { usersService } from '../users/config';
 import { UsersService } from '../../src/users/users.service';
 
 describe(`${config.name} (e2e)`, () => {
@@ -12,10 +14,10 @@ describe(`${config.name} (e2e)`, () => {
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AuthModule, UsersModule],
+      imports: [AuthModule, GamesModule, UsersService],
     })
-      .overrideProvider(UsersService)
-      .useValue(usersService)
+      .overrideProvider([GamesService, UsersService])
+      .useValue([gamesService, usersService])
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -36,90 +38,89 @@ describe(`${config.name} (e2e)`, () => {
     await app.close();
   });
 
-  it(`${config.createUser.url} (${config.createUser.method})
-    should create a new user`, async () => {
-    const user = {
-      login: 'new_user',
-      password: 'new_password',
+  it(`${config.createGame.url} (${config.createGame.method})
+    should create a new game`, async () => {
+    const game = {
+      name: 'new_game',
     };
     const { statusCode, body } = await request(app.getHttpServer())
-      .post(config.createUser.url)
-      .send(user)
+      .post(config.createGame.url)
+      .send(game)
       .set({ Authorization: `Bearer ${token}` });
 
-    const expectedUsers = await usersService.findOne(user.login);
+    const expected = await gamesService.findOne(game.name);
 
     expect(statusCode).toEqual(201);
     expect(body).toHaveProperty('data', {
-      login: expectedUsers.login,
+      name: expected.name,
     });
   });
 
-  it(`${config.allUsers.url} (${config.allUsers.method})
-    should return all users and skip/limit (default)`, async () => {
+  it(`${config.games.url} (${config.games.method})
+    should return all games and skip/limit (default)`, async () => {
     const { statusCode, body } = await request(app.getHttpServer())
-      .get(config.allUsers.url)
+      .get(config.games.url)
       .set({ Authorization: `Bearer ${token}` });
 
     const defaultSkip = 0;
     const defaultLimit = 10;
 
-    const expectedUsers = (
-      await usersService.findAll(defaultSkip, defaultLimit)
-    ).map(({ login }) => ({ login }));
+    const expected = (
+      await gamesService.findAll(defaultSkip, defaultLimit)
+    ).map(({ name }) => ({ name }));
 
     expect(statusCode).toEqual(200);
-    expect(body).toHaveProperty('data', expectedUsers);
+    expect(body).toHaveProperty('data', expected);
     expect(body).toHaveProperty('skip', defaultSkip);
     expect(body).toHaveProperty('limit', defaultLimit);
   });
 
-  it(`${config.allUsers.url} (${config.allUsers.method})
-    should return all users and skip/limit`, async () => {
+  it(`${config.games.url} (${config.games.method})
+    should return all games and skip/limit`, async () => {
     const skip = 0;
     const limit = 5;
     const { statusCode, body } = await request(app.getHttpServer())
-      .get(`${config.allUsers.url}?skip=${skip}&limit=${limit}`)
+      .get(`${config.games.url}?skip=${skip}&limit=${limit}`)
       .set({ Authorization: `Bearer ${token}` });
 
-    const expectedUsers = (await usersService.findAll(skip, limit)).map(
-      ({ login }) => ({ login }),
+    const expected = (await gamesService.findAll(skip, limit)).map(
+      ({ name }) => ({ name }),
     );
 
     expect(statusCode).toEqual(200);
-    expect(body).toHaveProperty('data', expectedUsers);
+    expect(body).toHaveProperty('data', expected);
     expect(body).toHaveProperty('skip', skip);
     expect(body).toHaveProperty('limit', limit);
   });
 
-  it(`${config.getUserByLogin.url} (${config.getUserByLogin.method})
-    should return user by login`, async () => {
-    const login = 'e2e';
+  it(`${config.games.url} (${config.games.method})
+    should return game by name`, async () => {
+    const name = 'Spider-Man';
     const { statusCode, body } = await request(app.getHttpServer())
-      .get(`${config.getUserByLogin.url}/${login}`)
+      .get(`${config.games.url}/${name}`)
       .set({ Authorization: `Bearer ${token}` });
 
-    const expectedUsers = await usersService.findOne(login);
+    const expected = await gamesService.findOne(name);
 
     expect(statusCode).toEqual(200);
     expect(body).toHaveProperty('data', {
-      login: expectedUsers.login,
+      name: expected.name,
     });
   });
 
-  it(`${config.deleteUser.url} (${config.deleteUser.method})
-    should delete user by login`, async () => {
-    const login = 'e2e';
+  it(`${config.deleteGame.url} (${config.deleteGame.method})
+    should delete game by name`, async () => {
+    const name = 'Spider-Man';
     const { statusCode, body } = await request(app.getHttpServer())
-      .del(`${config.deleteUser.url}/${login}`)
+      .del(`${config.deleteGame.url}/${name}`)
       .set({ Authorization: `Bearer ${token}` });
 
-    const expectedUsers = await usersService.findOne(login);
+    const expected = await gamesService.findOne(name);
 
-    expect(expectedUsers).toBeFalsy();
+    expect(expected).toBeFalsy();
     expect(statusCode).toEqual(200);
     expect(body).toHaveProperty('data', {
-      login: login,
+      name: name,
     });
   });
 });

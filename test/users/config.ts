@@ -1,4 +1,4 @@
-import { User, UsersService } from '../../src/users/users.service';
+import { UsersService } from '../../src/users/users.service';
 import { users, e2e } from '../../src/mocks/users';
 
 export const config = {
@@ -24,7 +24,7 @@ export const config = {
 export const e2eCreds = e2e;
 
 export const usersService: UsersService = {
-  async insert(user) {
+  async create(user) {
     const idx = users.push(user);
     return {
       id: idx,
@@ -32,19 +32,19 @@ export const usersService: UsersService = {
       password: users[idx - 1].password, // TODO: remove it
     };
   },
-  async find(skip, limit) {
+  async findAll(skip, limit) {
     return users.slice(skip, limit);
   },
   async findOne(login) {
     return users.find((user) => user.login === login);
   },
   async remove(login) {
-    const idx = users.findIndex(x => x.login === login);
+    const idx = users.findIndex((x) => x.login === login);
 
     const copiedUser = { ...users[idx] };
 
     users.splice(idx, 1);
 
     return copiedUser;
-  }
+  },
 };

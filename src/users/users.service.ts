@@ -4,7 +4,7 @@ import { User } from './types';
 
 @Injectable()
 export class UsersService {
-  async insert(user: User): Promise<User> {
+  async create(user: User): Promise<User> {
     const idx = users.push(user);
 
     return {
@@ -14,7 +14,7 @@ export class UsersService {
     };
   }
 
-  async find(skip = 0, limit = 10): Promise<User[]> {
+  async findAll(skip = 0, limit = 10): Promise<User[]> {
     return users.slice(skip, limit);
   }
 
@@ -23,7 +23,7 @@ export class UsersService {
   }
 
   async remove(login: string): Promise<User | undefined> {
-    const idx = users.findIndex(x => x.login === login);
+    const idx = users.findIndex((x) => x.login === login);
 
     const copiedUser = { ...users[idx] };
 
