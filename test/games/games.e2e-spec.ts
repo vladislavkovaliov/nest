@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AuthModule } from '../../src/auth/auth.module';
-import { config, e2eCreds, gamesService } from './config';
+import { config, e2eCreds } from './config';
 import { GamesModule } from '../../src/games/games.module';
 import { GamesService } from '../../src/games/games.service';
 import { usersService } from '../users/config';
@@ -11,13 +11,14 @@ import { UsersService } from '../../src/users/users.service';
 describe(`${config.name} (e2e)`, () => {
   let app: INestApplication;
   let token = null;
+  let gamesService = new GamesService();
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AuthModule, GamesModule, UsersService],
     })
       .overrideProvider([GamesService, UsersService])
-      .useValue([gamesService, usersService])
+      .useValue([usersService])
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -67,7 +68,7 @@ describe(`${config.name} (e2e)`, () => {
 
     const expected = (
       await gamesService.findAll(defaultSkip, defaultLimit)
-    ).map(({ name }) => ({ name }));
+    ).map(({ name, price, likes, createdDate }) => ({ name, price, likes, createdDate }));
 
     expect(statusCode).toEqual(200);
     expect(body).toHaveProperty('data', expected);
@@ -84,7 +85,7 @@ describe(`${config.name} (e2e)`, () => {
       .set({ Authorization: `Bearer ${token}` });
 
     const expected = (await gamesService.findAll(skip, limit)).map(
-      ({ name }) => ({ name }),
+      ({ name, price, likes, createdDate }) => ({ name, price, likes, createdDate })
     );
 
     expect(statusCode).toEqual(200);
@@ -122,5 +123,18 @@ describe(`${config.name} (e2e)`, () => {
     expect(body).toHaveProperty('data', {
       name: name,
     });
+  });
+
+  it('asdasd', async () => {
+    const { statusCode, body } = await request(app.getHttpServer())
+      .get(`${config.games.url}?orderBy=createdDate&limit=2`)
+      .set({ Authorization: `Bearer ${token}` });
+
+
+
+    console.log(body.data.map(x => new Date(x.createdDate * 1000).toLocaleString("en-US", {timeZoneName: "short"})));
+
+
+
   });
 });

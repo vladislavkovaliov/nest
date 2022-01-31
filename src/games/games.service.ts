@@ -2,20 +2,38 @@ import { Injectable } from '@nestjs/common';
 
 import { Game } from './types';
 import { games } from '../mocks/games';
+import { CreateGameDto } from './dto';
+
+import { last, propEq, clone, compose, findIndex, sortBy, sort as sortR, slice, prop, ifElse, sortWith, ascend, descend } from 'ramda';
+
+export type OrderBy = 'createdDate';
 
 @Injectable()
 export class GamesService {
-  async create(game: Game): Promise<Game | undefined> {
-    const idx = games.push(game);
+  async create(game: CreateGameDto): Promise<Game | undefined> {
+    const newGame = {
+      ...game,
+      'likes': [],
+      'createdDate': Math.floor(Date.now() / 1000),
+    } as Game;
+
+    const idx = games.push(newGame);
+    const l = last(games);
 
     return {
       id: idx,
-      name: games[idx - 1].name,
+      name: l.name,
+      price: l.price,
+      likes: l.likes,
+      createdDate: l.createdDate,
     };
   }
 
-  async findAll(skip: number, limit: number): Promise<Game[]> {
-    return games.slice(skip, limit);
+  async findAll(skip: number, limit: number, orderBy?: OrderBy, sort: string = 'asc'): Promise<Game[]> {
+    const sortFn = sort === 'asc' ? ascend : descend;
+    const sorted = sortR(sortFn(prop(orderBy)), games);
+
+    return sorted.slice(skip, limit);
   }
 
   async findOne(name: string): Promise<Game | undefined> {
@@ -23,10 +41,12 @@ export class GamesService {
   }
 
   async remove(name: string): Promise<Game | undefined> {
-    const idx = games.findIndex((x) => x.name === name);
-    const copied = { ...games[idx] };
+    const index = compose(
+      findIndex(propEq('name', name)),
+    )(games)
+    const copied = clone(games[index]);
 
-    games.splice(idx, 1);
+    games.splice(index, 1);
 
     return copied;
   }

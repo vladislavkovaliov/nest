@@ -39,11 +39,12 @@ export class GamesController {
   async create(@Body() createGameDto: CreateGameDto) {
     const newGame = await this.gamesService.create({
       ...createGameDto,
-    } as Game);
+    });
 
     return {
       data: {
         name: newGame.name,
+        price: newGame.price,
       },
     };
   }
@@ -52,17 +53,19 @@ export class GamesController {
   @ApiResponse({ status: 200, type: GameDto, isArray: true })
   @ApiImplicitQuery({ name: 'limit', required: false, type: Number })
   @ApiImplicitQuery({ name: 'skip', required: false, type: Number })
+  @ApiImplicitQuery({ name: 'sort', required: false, type: String })
   @UseGuards(JwtAuthGuard)
   @Get('/')
-  async findAll(@Query('skip') skip = 0, @Query('limit') limit = 10) {
-    const games = (await this.gamesService.findAll(skip, limit)).map(
-      ({ name }) => ({ name }),
+  async findAll(@Query('skip') skip = 0, @Query('limit') limit = 10, @Query('orderBy') orderBy?, @Query('sort') sort = 'asc') {
+    const games = (await this.gamesService.findAll(skip, limit, orderBy, sort)).map(
+      ({ name, price, likes, createdDate }) => ({ name, price, likes, createdDate }),
     );
 
     return {
       data: games,
       skip: Number(skip),
       limit: Number(limit),
+      total: games.length,
     };
   }
 

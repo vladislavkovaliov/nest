@@ -41,7 +41,7 @@ export class AuthController {
     this.authService = authService;
   }
 
-  @ApiOperation({ summary: 'AWT authorize user by login and password.' })
+  @ApiOperation({ summary: 'JWT authorize user by login and password.' })
   @ApiResponse({ status: 200, type: JWT })
   @UseGuards(AuthGuard('local'))
   @HttpCode(200)
@@ -53,6 +53,7 @@ export class AuthController {
     } as User);
   }
 
+  @ApiOperation({ summary: 'Return profile information based JWT token.' })
   @UseGuards(JwtAuthGuard)
   @Get('/profile')
   @ApiBearerAuth()
